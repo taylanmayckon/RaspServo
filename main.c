@@ -7,6 +7,8 @@
 
 uint wrap = 20000; // definindo o WRAP do PWM
 uint di = 125; // Divisor inteiro 
+bool rotate_direction = true; // true = angulo crescente; false = angulo decrescente
+float servo_duty_cycle = 0.025; // Valor inicial do DC do servo
 
 void config_servo_pwm(uint gpio){
     // Equação para a f_pwm:
@@ -19,6 +21,7 @@ void config_servo_pwm(uint gpio){
     pwm_set_wrap(slice, wrap); // Definindo o valor de wrap (contador do PWM)
     pwm_set_gpio_level(gpio, 0.12*wrap); // Iniciando com 0.12% de Duty Cycle (corresponde à 180º no servo)
     pwm_set_enabled(slice, true); // Habilitando o pwm no slice correspondente
+    printf("%d", slice);
 }
 
 void first_routine(){
@@ -31,6 +34,28 @@ void first_routine(){
     sleep_ms(5000);
 }
 
+// Interrupção com temporizador para ajustar o pwm a cada 10ms
+bool pwm_repeating_timer_callback(struct repeating_timer *t){
+    // Decisão da direção de rotação
+    if(servo_duty_cycle >= 0.12){ 
+        rotate_direction = false; // Ajusta a rotação para decrescente
+    }
+    else if(servo_duty_cycle <= 0.025){
+        rotate_direction = true; // Ajusta a rotação para crescente
+    }
+
+    // Incrementos/decrementos de rotação
+    if(rotate_direction){
+        servo_duty_cycle += (0.025/100);
+        pwm_set_gpio_level(SERVO_PIN, servo_duty_cycle*wrap);
+    } else{
+        servo_duty_cycle -= (0.025/100);
+        pwm_set_gpio_level(SERVO_PIN, servo_duty_cycle*wrap);
+    }
+
+    return true; // Retorna true para repetir a interrupção
+}
+
 
 int main(){
     stdio_init_all();
@@ -38,19 +63,14 @@ int main(){
     config_servo_pwm(SERVO_PIN);
     config_servo_pwm(LED_PIN);
 
+    // Chamando a rotina que muda o angulo a cada 5000s
     first_routine();
 
-    while (true) {
-        for(float dc = 0.025; dc <= 0.12; dc = dc+(0.025/100)){ // Rotina de subida do angulo (0 a 180º)
-            pwm_set_gpio_level(SERVO_PIN, dc*wrap); // Ajustando o Duty Cycle para o novo angulo
-            pwm_set_gpio_level(LED_PIN, dc*wrap); // Ajustando o led para visualizar na BitDogLab
-            sleep_ms(10); // Atraso solicitado (10ms)
-        }
+    // Configurando o repeating timer para 10ms
+    struct repeating_timer timer;
+    add_repeating_timer_ms(10, pwm_repeating_timer_callback, NULL, &timer);
 
-        for(float dc = 0.12; dc >= 0.025; dc = dc-(0.025/100)){ // Rotina de descida do angulo (180 a 0º)
-            pwm_set_gpio_level(SERVO_PIN, dc*wrap); // Ajustando o Duty Cycle para o novo angulo
-            pwm_set_gpio_level(LED_PIN, dc*wrap); // Ajustando o led para visualizar na BitDogLab
-            sleep_ms(10); // Atraso solicitado (10ms)
-        }
+    while (true) {
+        // Superloop vazio por conta da interrupção periódica
     }
 }
