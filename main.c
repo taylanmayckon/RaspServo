@@ -48,9 +48,11 @@ bool pwm_repeating_timer_callback(struct repeating_timer *t){
     if(rotate_direction){
         servo_duty_cycle += (0.025/100);
         pwm_set_gpio_level(SERVO_PIN, servo_duty_cycle*wrap);
+        pwm_set_gpio_level(LED_PIN, servo_duty_cycle*wrap);
     } else{
         servo_duty_cycle -= (0.025/100);
         pwm_set_gpio_level(SERVO_PIN, servo_duty_cycle*wrap);
+        pwm_set_gpio_level(LED_PIN, servo_duty_cycle*wrap);
     }
 
     return true; // Retorna true para repetir a interrupção
