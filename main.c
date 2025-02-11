@@ -21,7 +21,6 @@ void config_servo_pwm(uint gpio){
     pwm_set_wrap(slice, wrap); // Definindo o valor de wrap (contador do PWM)
     pwm_set_gpio_level(gpio, 0.12*wrap); // Iniciando com 0.12% de Duty Cycle (corresponde à 180º no servo)
     pwm_set_enabled(slice, true); // Habilitando o pwm no slice correspondente
-    printf("%d", slice);
 }
 
 void first_routine(){
