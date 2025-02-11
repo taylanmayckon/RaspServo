@@ -2,3 +2,6 @@
 version = 1
 firmware = 'build/RaspServo.uf2'
 elf = 'build/RaspServo.elf'
+
+[simulation]
+speed = 10.0  # Pode ajustar para 2.0, 5.0 ou mais
